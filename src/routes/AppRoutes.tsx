@@ -1,29 +1,25 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import DashboardPage from "../pages/DashboardPage";
+import LoginPage from "../pages/LoginPage";
+import NotFoundPage from "../pages/NotFoundPage";
 import RoomsPage from "../pages/RoomsPage";
 import RoomDetailsPage from "../pages/RoomDetailsPage";
+import { ProtectedRoute } from "./ProtectedRoute";
 
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/rooms" replace />} />
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-      <Route path="/rooms" element={<RoomsPage />} />
+      <Route path="/login" element={<LoginPage />} />
 
-      <Route path="/rooms/:roomId" element={<RoomDetailsPage />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/rooms" element={<RoomsPage />} />
+        <Route path="/rooms/:roomId" element={<RoomDetailsPage />} />
+      </Route>
 
-      <Route
-        path="*"
-        element={
-          <main className="min-h-screen bg-slate-100 p-8">
-            <h1 className="text-3xl font-bold text-slate-900">
-              Page Not Found
-            </h1>
-            <p className="mt-2 text-slate-600">
-              The page you are looking for does not exist.
-            </p>
-          </main>
-        }
-      />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
