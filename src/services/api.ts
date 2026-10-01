@@ -1,9 +1,10 @@
 import type { Room } from "../types/room";
 
-const API_BASE_URL = "http://localhost:5050";
+const CAMPUS_SYNC_BE_API_BASE_URL =
+  import.meta.env.VITE_CAMPUS_SYNC_BE_API_BASE_URL;
 
 export async function getRooms(): Promise<Room[]> {
-  const response = await fetch(`${API_BASE_URL}/api/rooms`);
+  const response = await fetch(`${CAMPUS_SYNC_BE_API_BASE_URL}/api/rooms`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch rooms");
