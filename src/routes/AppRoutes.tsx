@@ -1,4 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import DashboardPage from "../pages/DashboardPage";
+import RegisterPage from "../pages/RegisterPage";
 import RoomsPage from "../pages/RoomsPage";
 import RoomDetailsPage from "../pages/RoomDetailsPage";
 
@@ -6,6 +8,10 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/rooms" replace />} />
+
+      <Route path="/register" element={<RegisterPage />} />
+
+      <Route path="/dashboard" element={<DashboardPage />} />
 
       <Route path="/rooms" element={<RoomsPage />} />
 
