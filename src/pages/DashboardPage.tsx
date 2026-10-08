@@ -1,29 +1,27 @@
-import { Link } from "react-router-dom";
+import { LogoutButton } from "../components/common/LogoutButton"
+import { useAuth } from "../hooks/useAuth"
 
-/**
- * Minimal signed-in landing screen, so registration has somewhere to send a
- * new user. Session handling and a personalised greeting arrive with
- * CSYNC-11 (log in and log out).
- */
 function DashboardPage() {
+  const { user } = useAuth()
+
   return (
-    <main className="min-h-screen bg-slate-100 p-8">
-      <div className="mx-auto max-w-3xl">
-        <h1 className="mb-2 text-3xl font-bold text-slate-900">Dashboard</h1>
+    <main className="min-h-screen bg-stone-50 px-6 py-6 text-slate-950 sm:px-10">
+      <header className="mx-auto flex max-w-5xl items-center justify-between border-b border-slate-200 pb-5">
+        <p className="text-sm font-medium tracking-wide text-slate-500">CAMPUSSYNC</p>
+        <LogoutButton />
+      </header>
 
-        <p className="mb-6 text-slate-600">
-          Your account is ready. Browse rooms to make a reservation.
+      <section className="mx-auto max-w-5xl py-20 sm:py-28">
+        <p className="text-sm font-medium text-slate-500">Dashboard</p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+          Welcome{user?.name ? `, ${user.name}` : ""}.
+        </h1>
+        <p className="mt-4 max-w-xl text-base leading-7 text-slate-600">
+          You are signed in and ready to manage your campus spaces.
         </p>
-
-        <Link
-          to="/rooms"
-          className="inline-block rounded-md bg-blue-600 px-4 py-2 font-semibold text-white transition hover:bg-blue-700"
-        >
-          Browse rooms
-        </Link>
-      </div>
+      </section>
     </main>
-  );
+  )
 }
 
-export default DashboardPage;
+export default DashboardPage
