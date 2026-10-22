@@ -1,4 +1,6 @@
 import type { Room } from "../types/room";
+import type { GroupedReservations } from "../types/reservation";
+import { authHeaders } from "./authToken";
 import {
   AvailabilitySearchError,
   type AvailabilityFormValues,
@@ -67,6 +69,26 @@ export async function getReservationRules(): Promise<ReservationRules> {
 
   if (!response.ok) {
     throw new Error("Failed to fetch reservation rules");
+  }
+
+  return response.json();
+}
+
+/**
+ * Reads the signed-in user's reservations, split into upcoming and history
+ * (US-11).
+ *
+ * The backend identifies the user from the token, so this never passes a user
+ * id: a caller cannot ask for anyone else's bookings.
+ */
+export async function getMyReservations(): Promise<GroupedReservations> {
+  const response = await fetch(
+    `${CAMPUS_SYNC_BE_API_BASE_URL}/api/reservations/me`,
+    { headers: authHeaders() },
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch your bookings");
   }
 
   return response.json();
