@@ -3,6 +3,7 @@ import DashboardPage from "../pages/DashboardPage";
 import LoginPage from "../pages/LoginPage";
 import NotFoundPage from "../pages/NotFoundPage";
 import RegisterPage from "../pages/RegisterPage";
+import AddRoomPage from "../pages/AddRoomPage";
 import MyBookingsPage from "../pages/MyBookingsPage";
 import RoomsPage from "../pages/RoomsPage";
 import RoomAvailabilityPage from "../pages/RoomAvailabilityPage";
@@ -24,6 +25,10 @@ function AppRoutes() {
         <Route path="/rooms/availability" element={<RoomAvailabilityPage />} />
         <Route path="/rooms/:roomId" element={<RoomDetailsPage />} />
         <Route path="/my-bookings" element={<MyBookingsPage />} />
+      </Route>
+
+      <Route element={<ProtectedRoute requiredRole="admin" />}>
+        <Route path="/admin/rooms/new" element={<AddRoomPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

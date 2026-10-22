@@ -2,6 +2,11 @@ import type { Room } from "../types/room";
 import type { GroupedReservations } from "../types/reservation";
 import { authHeaders } from "./authToken";
 import {
+  CreateRoomError,
+  type CreateRoomSuccess,
+  type NewRoomRequest,
+} from "../types/adminRoom";
+import {
   AvailabilitySearchError,
   type AvailabilityFormValues,
   type AvailabilityResult,
@@ -92,4 +97,31 @@ export async function getMyReservations(): Promise<GroupedReservations> {
   }
 
   return response.json();
+}
+
+/**
+ * Creates a room (US-13). Administrators only; the backend enforces that and
+ * answers 403 for anyone else.
+ *
+ * @throws CreateRoomError carrying any per-field messages.
+ */
+export async function createRoom(
+  room: NewRoomRequest,
+): Promise<CreateRoomSuccess> {
+  const response = await fetch(`${CAMPUS_SYNC_BE_API_BASE_URL}/api/rooms`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify(room),
+  });
+
+  const body = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new CreateRoomError(
+      body?.message ?? "Unable to create the room. Please try again.",
+      body?.errors ?? {},
+    );
+  }
+
+  return body as CreateRoomSuccess;
 }
