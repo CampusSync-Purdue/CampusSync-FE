@@ -62,6 +62,13 @@ function RoomsPage() {
         Available Rooms
       </h1>
 
+      <Link
+        to="/rooms/availability"
+        className="mb-6 inline-block text-slate-700 underline hover:text-slate-900"
+      >
+        Search by date and time
+      </Link>
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {rooms.map((room) => (
           <Link

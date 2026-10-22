@@ -4,6 +4,7 @@ import LoginPage from "../pages/LoginPage";
 import NotFoundPage from "../pages/NotFoundPage";
 import RegisterPage from "../pages/RegisterPage";
 import RoomsPage from "../pages/RoomsPage";
+import RoomAvailabilityPage from "../pages/RoomAvailabilityPage";
 import RoomDetailsPage from "../pages/RoomDetailsPage";
 import { ProtectedRoute } from "./ProtectedRoute";
 
@@ -19,6 +20,7 @@ function AppRoutes() {
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/rooms" element={<RoomsPage />} />
+        <Route path="/rooms/availability" element={<RoomAvailabilityPage />} />
         <Route path="/rooms/:roomId" element={<RoomDetailsPage />} />
       </Route>
 
