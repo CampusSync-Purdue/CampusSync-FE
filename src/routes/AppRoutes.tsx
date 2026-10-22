@@ -4,6 +4,7 @@ import LoginPage from "../pages/LoginPage";
 import NotFoundPage from "../pages/NotFoundPage";
 import RegisterPage from "../pages/RegisterPage";
 import AddRoomPage from "../pages/AddRoomPage";
+import AdminReservationsPage from "../pages/AdminReservationsPage";
 import MyBookingsPage from "../pages/MyBookingsPage";
 import RoomsPage from "../pages/RoomsPage";
 import RoomAvailabilityPage from "../pages/RoomAvailabilityPage";
@@ -29,6 +30,7 @@ function AppRoutes() {
 
       <Route element={<ProtectedRoute requiredRole="admin" />}>
         <Route path="/admin/rooms/new" element={<AddRoomPage />} />
+        <Route path="/admin/reservations" element={<AdminReservationsPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

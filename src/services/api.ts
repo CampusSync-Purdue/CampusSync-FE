@@ -1,5 +1,9 @@
 import type { Room } from "../types/room";
-import type { GroupedReservations } from "../types/reservation";
+import {
+  CancelReservationError,
+  type CancelReservationSuccess,
+  type GroupedReservations,
+} from "../types/reservation";
 import { authHeaders } from "./authToken";
 import {
   CreateRoomError,
@@ -124,4 +128,48 @@ export async function createRoom(
   }
 
   return body as CreateRoomSuccess;
+}
+
+/**
+ * Reads every reservation, for administrators (US-15).
+ *
+ * Provisional: CSYNC-24 owns the administrator reservation view. This exists
+ * so the cancellation action has something to act on.
+ */
+export async function getAllReservations(): Promise<GroupedReservations> {
+  const response = await fetch(
+    `${CAMPUS_SYNC_BE_API_BASE_URL}/api/reservations`,
+    { headers: authHeaders() },
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch reservations");
+  }
+
+  return response.json();
+}
+
+/**
+ * Cancels a reservation as an administrator (US-16). The record is kept and
+ * its status becomes cancelled.
+ *
+ * @throws CancelReservationError with the backend's message.
+ */
+export async function cancelReservation(
+  reservationId: string,
+): Promise<CancelReservationSuccess> {
+  const response = await fetch(
+    `${CAMPUS_SYNC_BE_API_BASE_URL}/api/reservations/${reservationId}/cancel`,
+    { method: "POST", headers: authHeaders() },
+  );
+
+  const body = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new CancelReservationError(
+      body?.message ?? "Unable to cancel the reservation. Please try again.",
+    );
+  }
+
+  return body as CancelReservationSuccess;
 }
