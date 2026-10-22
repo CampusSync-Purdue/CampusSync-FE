@@ -52,3 +52,8 @@ export class AvailabilitySearchError extends Error {
     this.fieldErrors = fieldErrors;
   }
 }
+
+/** The booking rules published by the backend (US-10). */
+export type ReservationRules = {
+  maxDurationMinutes: number;
+};

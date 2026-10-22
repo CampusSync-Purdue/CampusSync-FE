@@ -3,6 +3,7 @@ import {
   AvailabilitySearchError,
   type AvailabilityFormValues,
   type AvailabilityResult,
+  type ReservationRules,
 } from "../types/availability";
 
 const CAMPUS_SYNC_BE_API_BASE_URL =
@@ -53,4 +54,20 @@ export async function searchRoomAvailability(
   }
 
   return body as AvailabilityResult;
+}
+
+/**
+ * Reads the booking rules, so the limit is shown from one source rather than
+ * duplicated in the browser (US-10).
+ */
+export async function getReservationRules(): Promise<ReservationRules> {
+  const response = await fetch(
+    `${CAMPUS_SYNC_BE_API_BASE_URL}/api/reservations/rules`,
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch reservation rules");
+  }
+
+  return response.json();
 }

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { validateAvailabilityForm } from "./availabilityValidation";
+import {
+  describeMaxDuration,
+  durationMinutes,
+  validateAvailabilityForm,
+} from "./availabilityValidation";
 import type { AvailabilityFormValues } from "../types/availability";
 
 const VALID: AvailabilityFormValues = {
@@ -63,5 +67,31 @@ describe("validateAvailabilityForm", () => {
         endTime: " 16:00 ",
       }),
     ).toEqual({});
+  });
+});
+
+describe("durationMinutes", () => {
+  it("measures a whole-hour range", () => {
+    expect(durationMinutes("14:00", "16:00")).toBe(120);
+  });
+
+  it("measures a range with minutes", () => {
+    expect(durationMinutes("09:15", "10:45")).toBe(90);
+  });
+
+  it("returns zero for an empty range", () => {
+    expect(durationMinutes("14:00", "14:00")).toBe(0);
+  });
+});
+
+describe("describeMaxDuration", () => {
+  it("names a whole number of hours", () => {
+    expect(describeMaxDuration(180)).toBe("3 hours");
+    expect(describeMaxDuration(60)).toBe("1 hour");
+  });
+
+  it("falls back to minutes when hours do not divide evenly", () => {
+    expect(describeMaxDuration(90)).toBe("90 minutes");
+    expect(describeMaxDuration(1)).toBe("1 minute");
   });
 });
