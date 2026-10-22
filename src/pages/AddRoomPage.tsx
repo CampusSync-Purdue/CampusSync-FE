@@ -4,6 +4,7 @@ import {
   toNewRoomRequest,
   validateAddRoomForm,
 } from "../validation/roomValidation";
+import TimeSelect from "../components/common/TimeSelect";
 import {
   CreateRoomError,
   EMPTY_ADD_ROOM_FORM,
@@ -243,13 +244,12 @@ function AddRoomPage() {
                   {dayLabel(day)} opening time
                 </label>
 
-                <input
+                <TimeSelect
                   id={`${day}-open`}
-                  type="time"
                   value={values.hours[day].open}
                   disabled={!values.hours[day].enabled}
-                  onChange={(event) => updateDay(day, { open: event.target.value })}
-                  className="rounded border border-slate-300 px-2 py-1 disabled:bg-slate-100 disabled:text-slate-400"
+                  onChange={(value) => updateDay(day, { open: value })}
+                  className="rounded border border-slate-300 bg-white px-2 py-1 disabled:bg-slate-100 disabled:text-slate-400"
                 />
 
                 <span className="text-slate-500">to</span>
@@ -258,13 +258,12 @@ function AddRoomPage() {
                   {dayLabel(day)} closing time
                 </label>
 
-                <input
+                <TimeSelect
                   id={`${day}-close`}
-                  type="time"
                   value={values.hours[day].close}
                   disabled={!values.hours[day].enabled}
-                  onChange={(event) => updateDay(day, { close: event.target.value })}
-                  className="rounded border border-slate-300 px-2 py-1 disabled:bg-slate-100 disabled:text-slate-400"
+                  onChange={(value) => updateDay(day, { close: value })}
+                  className="rounded border border-slate-300 bg-white px-2 py-1 disabled:bg-slate-100 disabled:text-slate-400"
                 />
               </div>
             ))}
