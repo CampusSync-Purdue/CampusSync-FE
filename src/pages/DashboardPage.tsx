@@ -37,12 +37,21 @@ function DashboardPage() {
           </Link>
 
           {user?.role === "admin" ? (
-            <Link
-              to="/admin/rooms/new"
-              className="rounded border border-slate-300 px-5 py-2 font-medium text-slate-900 transition hover:bg-slate-100"
-            >
-              Add a room
-            </Link>
+            <>
+              <Link
+                to="/admin/rooms/new"
+                className="rounded border border-slate-300 px-5 py-2 font-medium text-slate-900 transition hover:bg-slate-100"
+              >
+                Add a room
+              </Link>
+
+              <Link
+                to="/admin/reservations"
+                className="rounded border border-slate-300 px-5 py-2 font-medium text-slate-900 transition hover:bg-slate-100"
+              >
+                Manage reservations
+              </Link>
+            </>
           ) : null}
         </nav>
       </section>
