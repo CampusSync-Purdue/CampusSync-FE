@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { searchRoomAvailability } from "../services/api";
-import { validateAvailabilityForm } from "../validation/availabilityValidation";
+import { getReservationRules, searchRoomAvailability } from "../services/api";
+import {
+  describeMaxDuration,
+  durationMinutes,
+  validateAvailabilityForm,
+} from "../validation/availabilityValidation";
 import {
   AvailabilitySearchError,
   EMPTY_AVAILABILITY_FORM,
@@ -40,6 +44,27 @@ function RoomAvailabilityPage() {
   const [formError, setFormError] = useState("");
   const [result, setResult] = useState<AvailabilityResult | null>(null);
   const [searching, setSearching] = useState(false);
+  const [maxDurationMinutes, setMaxDurationMinutes] = useState<number | null>(
+    null,
+  );
+
+  useEffect(() => {
+    // The limit is shown as guidance. If it cannot be read the form still
+    // works, because the server enforces it on every search.
+    getReservationRules()
+      .then((rules) => setMaxDurationMinutes(rules.maxDurationMinutes))
+      .catch(() => setMaxDurationMinutes(null));
+  }, []);
+
+  const selectedMinutes =
+    values.startTime && values.endTime
+      ? durationMinutes(values.startTime, values.endTime)
+      : null;
+
+  const exceedsLimit =
+    maxDurationMinutes !== null &&
+    selectedMinutes !== null &&
+    selectedMinutes > maxDurationMinutes;
 
   function updateField(field: keyof AvailabilityFormValues, value: string) {
     setValues((current) => ({ ...current, [field]: value }));
@@ -160,7 +185,17 @@ function RoomAvailabilityPage() {
 
         <p className="mt-3 text-sm text-slate-600">
           Times are campus local time.
+          {maxDurationMinutes !== null
+            ? ` Reservations may be up to ${describeMaxDuration(maxDurationMinutes)}.`
+            : ""}
         </p>
+
+        {exceedsLimit && maxDurationMinutes !== null ? (
+          <p role="alert" className="mt-2 text-sm text-amber-700">
+            The time you chose is longer than {describeMaxDuration(maxDurationMinutes)}.
+            Shorten it before searching.
+          </p>
+        ) : null}
 
         <button
           type="submit"
