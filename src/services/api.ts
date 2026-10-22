@@ -17,14 +17,22 @@ import {
   type ReservationRules,
 } from "../types/availability";
 
-const CAMPUS_SYNC_BE_API_BASE_URL =
-  import.meta.env.VITE_CAMPUS_SYNC_BE_API_BASE_URL;
-
+/**
+ * The backend origin, without a path: every call appends its own `/api/...`
+ * route. VITE_API_BASE_URL stays supported as an override so existing local
+ * setups keep working, but VITE_CAMPUS_SYNC_BE_API_BASE_URL is the documented
+ * name.
+ *
+ * There used to be two constants here with the same value but different
+ * meanings, and sign-in read the one that had no `/api` prefix applied, so
+ * every login request 404ed.
+ */
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? CAMPUS_SYNC_BE_API_BASE_URL;
+  import.meta.env.VITE_CAMPUS_SYNC_BE_API_BASE_URL ??
+  import.meta.env.VITE_API_BASE_URL;
 
 export async function getRooms(): Promise<Room[]> {
-  const response = await fetch(`${CAMPUS_SYNC_BE_API_BASE_URL}/api/rooms`);
+  const response = await fetch(`${API_BASE_URL}/api/rooms`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch rooms");
@@ -52,7 +60,7 @@ export async function searchRoomAvailability(
   });
 
   const response = await fetch(
-    `${CAMPUS_SYNC_BE_API_BASE_URL}/api/rooms/availability?${query}`,
+    `${API_BASE_URL}/api/rooms/availability?${query}`,
   );
 
   const body = await response.json().catch(() => null);
@@ -73,7 +81,7 @@ export async function searchRoomAvailability(
  */
 export async function getReservationRules(): Promise<ReservationRules> {
   const response = await fetch(
-    `${CAMPUS_SYNC_BE_API_BASE_URL}/api/reservations/rules`,
+    `${API_BASE_URL}/api/reservations/rules`,
   );
 
   if (!response.ok) {
@@ -92,7 +100,7 @@ export async function getReservationRules(): Promise<ReservationRules> {
  */
 export async function getMyReservations(): Promise<GroupedReservations> {
   const response = await fetch(
-    `${CAMPUS_SYNC_BE_API_BASE_URL}/api/reservations/me`,
+    `${API_BASE_URL}/api/reservations/me`,
     { headers: authHeaders() },
   );
 
@@ -112,7 +120,7 @@ export async function getMyReservations(): Promise<GroupedReservations> {
 export async function createRoom(
   room: NewRoomRequest,
 ): Promise<CreateRoomSuccess> {
-  const response = await fetch(`${CAMPUS_SYNC_BE_API_BASE_URL}/api/rooms`, {
+  const response = await fetch(`${API_BASE_URL}/api/rooms`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify(room),
@@ -138,7 +146,7 @@ export async function createRoom(
  */
 export async function getAllReservations(): Promise<GroupedReservations> {
   const response = await fetch(
-    `${CAMPUS_SYNC_BE_API_BASE_URL}/api/reservations`,
+    `${API_BASE_URL}/api/reservations`,
     { headers: authHeaders() },
   );
 
@@ -159,7 +167,7 @@ export async function cancelReservation(
   reservationId: string,
 ): Promise<CancelReservationSuccess> {
   const response = await fetch(
-    `${CAMPUS_SYNC_BE_API_BASE_URL}/api/reservations/${reservationId}/cancel`,
+    `${API_BASE_URL}/api/reservations/${reservationId}/cancel`,
     { method: "POST", headers: authHeaders() },
   );
 
