@@ -48,3 +48,29 @@ export function validateAvailabilityForm(
 
   return errors;
 }
+
+/**
+ * Minutes between two campus-local `HH:mm` values on the same date.
+ *
+ * This reads the wall clock, which is right for a live warning as someone
+ * picks times. It can differ from elapsed time across a daylight saving
+ * transition, so the server measures the real elapsed time between instants
+ * and remains the authority on the limit.
+ */
+export function durationMinutes(startTime: string, endTime: string): number {
+  const [startHours, startMinutes] = startTime.split(":").map(Number);
+  const [endHours, endMinutes] = endTime.split(":").map(Number);
+
+  return endHours * 60 + endMinutes - (startHours * 60 + startMinutes);
+}
+
+/** A sentence naming the limit, matching how the backend phrases it. */
+export function describeMaxDuration(minutes: number): string {
+  if (minutes % 60 === 0) {
+    const hours = minutes / 60;
+
+    return hours === 1 ? "1 hour" : `${hours} hours`;
+  }
+
+  return minutes === 1 ? "1 minute" : `${minutes} minutes`;
+}

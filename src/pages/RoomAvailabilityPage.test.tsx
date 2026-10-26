@@ -3,14 +3,16 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import RoomAvailabilityPage from "./RoomAvailabilityPage";
-import { searchRoomAvailability } from "../services/api";
+import { getReservationRules, searchRoomAvailability } from "../services/api";
 import { AvailabilitySearchError } from "../types/availability";
 
 vi.mock("../services/api", () => ({
   searchRoomAvailability: vi.fn(),
+  getReservationRules: vi.fn(),
 }));
 
 const searchMock = vi.mocked(searchRoomAvailability);
+const rulesMock = vi.mocked(getReservationRules);
 
 const room = {
   id: "11111111-2222-3333-4444-555555555555",
@@ -40,10 +42,10 @@ async function searchFor(
     await user.type(screen.getByLabelText(/date/i), date);
   }
   if (startTime) {
-    await user.type(screen.getByLabelText(/start time/i), startTime);
+    await user.selectOptions(screen.getByLabelText(/start time/i), startTime);
   }
   if (endTime) {
-    await user.type(screen.getByLabelText(/end time/i), endTime);
+    await user.selectOptions(screen.getByLabelText(/end time/i), endTime);
   }
 
   await user.click(screen.getByRole("button", { name: /search/i }));
@@ -51,6 +53,7 @@ async function searchFor(
 
 beforeEach(() => {
   vi.clearAllMocks();
+  rulesMock.mockResolvedValue({ maxDurationMinutes: 180 });
 });
 
 describe("RoomAvailabilityPage", () => {
@@ -152,5 +155,57 @@ describe("RoomAvailabilityPage", () => {
     expect(
       await screen.findByText(/unable to search room availability/i),
     ).toBeTruthy();
+  });
+});
+
+describe("RoomAvailabilityPage duration limit", () => {
+  it("shows the limit published by the backend", async () => {
+    renderPage();
+
+    expect(
+      await screen.findByText(/reservations may be up to 3 hours/i),
+    ).toBeTruthy();
+  });
+
+  it("warns as soon as the chosen range exceeds the limit", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText(/reservations may be up to 3 hours/i);
+
+    await user.selectOptions(screen.getByLabelText(/start time/i), "09:00");
+    await user.selectOptions(screen.getByLabelText(/end time/i), "17:00");
+
+    expect(
+      await screen.findByText(/longer than 3 hours/i),
+    ).toBeTruthy();
+  });
+
+  it("does not warn for a range within the limit", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText(/reservations may be up to 3 hours/i);
+
+    await user.selectOptions(screen.getByLabelText(/start time/i), "14:00");
+    await user.selectOptions(screen.getByLabelText(/end time/i), "16:00");
+
+    expect(screen.queryByText(/longer than 3 hours/i)).toBeNull();
+  });
+
+  it("still allows searching when the limit cannot be read", async () => {
+    rulesMock.mockRejectedValue(new Error("rules unavailable"));
+    searchMock.mockResolvedValue({
+      date: "2026-10-21",
+      startTime: "14:00",
+      endTime: "16:00",
+      rooms: [room],
+    });
+
+    const user = userEvent.setup();
+    renderPage();
+    await searchFor(user);
+
+    expect(await screen.findByText("Study Room 101")).toBeTruthy();
   });
 });
