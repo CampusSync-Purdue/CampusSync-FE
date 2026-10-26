@@ -8,9 +8,6 @@ import {
   type RegisterSuccess,
 } from "../types/auth";
 
-const CAMPUS_SYNC_BE_API_BASE_URL =
-  import.meta.env.VITE_CAMPUS_SYNC_BE_API_BASE_URL;
-
 const GENERIC_ERROR_MESSAGE =
   "Unable to create your account right now. Please try again.";
 
@@ -48,7 +45,7 @@ export async function register(
   let response: Response;
 
   try {
-    response = await fetch(`${CAMPUS_SYNC_BE_API_BASE_URL}/api/auth/register`, {
+    response = await fetch(`${API_BASE_URL}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -93,13 +90,13 @@ async function getErrorMessage(response: Response): Promise<string> {
 }
 
 /**
- * Integration point: the backend should return `{ token, user }` from
- * POST /api/auth/login. The API base URL comes from VITE_API_BASE_URL.
+ * Signs in. Resolves with `{ token, user }`, where `user` carries the role
+ * the route guards read.
  */
 export async function loginUser(
   credentials: LoginCredentials,
 ): Promise<AuthResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+  const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -114,9 +111,9 @@ export async function loginUser(
   return (await response.json()) as AuthResponse;
 }
 
-/** Integration point: the backend should invalidate the current token/session. */
+/** Signs out. The backend invalidates the current token/session. */
 export async function logoutUser(token: string | null): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+  const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
     method: "POST",
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
   });

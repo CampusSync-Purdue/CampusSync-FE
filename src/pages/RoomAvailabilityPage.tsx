@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import TimeSelect from "../components/common/TimeSelect";
 import { getReservationRules, searchRoomAvailability } from "../services/api";
 import {
   describeMaxDuration,
   durationMinutes,
   validateAvailabilityForm,
 } from "../validation/availabilityValidation";
+import { formatTimeLabel } from "../utils/timeOptions";
 import {
   AvailabilitySearchError,
   EMPTY_AVAILABILITY_FORM,
@@ -148,13 +150,13 @@ function RoomAvailabilityPage() {
               Start time
             </label>
 
-            <input
+            <TimeSelect
               id="availability-start-time"
               name="startTime"
-              type="time"
               value={values.startTime}
-              onChange={(event) => updateField("startTime", event.target.value)}
-              aria-invalid={Boolean(fieldErrors.startTime)}
+              onChange={(value) => updateField("startTime", value)}
+              invalid={Boolean(fieldErrors.startTime)}
+              placeholder="Select a start time"
               className={FIELD_CLASSES}
             />
 
@@ -169,13 +171,13 @@ function RoomAvailabilityPage() {
               End time
             </label>
 
-            <input
+            <TimeSelect
               id="availability-end-time"
               name="endTime"
-              type="time"
               value={values.endTime}
-              onChange={(event) => updateField("endTime", event.target.value)}
-              aria-invalid={Boolean(fieldErrors.endTime)}
+              onChange={(value) => updateField("endTime", value)}
+              invalid={Boolean(fieldErrors.endTime)}
+              placeholder="Select an end time"
               className={FIELD_CLASSES}
             />
 
@@ -215,8 +217,8 @@ function RoomAvailabilityPage() {
       {result ? (
         <section aria-label="Availability results">
           <h2 className="mb-4 text-2xl font-semibold text-slate-900">
-            Rooms available {result.date} from {result.startTime} to{" "}
-            {result.endTime}
+            Rooms available {result.date} from{" "}
+            {formatTimeLabel(result.startTime)} to {formatTimeLabel(result.endTime)}
           </h2>
 
           {result.rooms.length === 0 ? (

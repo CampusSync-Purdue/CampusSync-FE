@@ -30,3 +30,16 @@ export type GroupedReservations = {
   upcoming: Reservation[];
   past: Reservation[];
 };
+
+export type CancelReservationSuccess = {
+  message: string;
+  reservation: Reservation;
+};
+
+/** Thrown for any non-2xx cancellation response. */
+export class CancelReservationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CancelReservationError";
+  }
+}
