@@ -42,10 +42,10 @@ async function searchFor(
     await user.type(screen.getByLabelText(/date/i), date);
   }
   if (startTime) {
-    await user.type(screen.getByLabelText(/start time/i), startTime);
+    await user.selectOptions(screen.getByLabelText(/start time/i), startTime);
   }
   if (endTime) {
-    await user.type(screen.getByLabelText(/end time/i), endTime);
+    await user.selectOptions(screen.getByLabelText(/end time/i), endTime);
   }
 
   await user.click(screen.getByRole("button", { name: /search/i }));
@@ -173,8 +173,8 @@ describe("RoomAvailabilityPage duration limit", () => {
 
     await screen.findByText(/reservations may be up to 3 hours/i);
 
-    await user.type(screen.getByLabelText(/start time/i), "09:00");
-    await user.type(screen.getByLabelText(/end time/i), "17:00");
+    await user.selectOptions(screen.getByLabelText(/start time/i), "09:00");
+    await user.selectOptions(screen.getByLabelText(/end time/i), "17:00");
 
     expect(
       await screen.findByText(/longer than 3 hours/i),
@@ -187,8 +187,8 @@ describe("RoomAvailabilityPage duration limit", () => {
 
     await screen.findByText(/reservations may be up to 3 hours/i);
 
-    await user.type(screen.getByLabelText(/start time/i), "14:00");
-    await user.type(screen.getByLabelText(/end time/i), "16:00");
+    await user.selectOptions(screen.getByLabelText(/start time/i), "14:00");
+    await user.selectOptions(screen.getByLabelText(/end time/i), "16:00");
 
     expect(screen.queryByText(/longer than 3 hours/i)).toBeNull();
   });
