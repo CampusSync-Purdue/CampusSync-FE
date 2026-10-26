@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { register } from "./authService";
+import { loginUser, logoutUser, register } from "./authService";
 import { RegistrationError } from "../types/auth";
 
 const payload = {
@@ -128,5 +128,74 @@ describe("register", () => {
     await expect(register(payload)).rejects.toThrowError(
       /Unable to reach the server/,
     );
+  });
+});
+
+describe("loginUser", () => {
+  it("posts to the /api-prefixed login endpoint", async () => {
+    // Sign-in used to post to `/auth/login`, with no `/api` prefix, so every
+    // login 404ed while registration worked.
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        token: "a-token",
+        user: { id: "1", name: "A", email: "a@b.c", role: "user" },
+      }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await loginUser({ email: "a@b.c", password: "Password1" });
+
+    const [url, options] = fetchMock.mock.calls[0];
+
+    expect(String(url)).toMatch(/\/api\/auth\/login$/);
+    expect(options.method).toBe("POST");
+  });
+
+  it("resolves with the token and user, including the role", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          token: "a-token",
+          user: { id: "1", name: "Admin", email: "a@b.c", role: "admin" },
+        }),
+      }),
+    );
+
+    const result = await loginUser({ email: "a@b.c", password: "Password1" });
+
+    expect(result.token).toBe("a-token");
+    expect(result.user.role).toBe("admin");
+  });
+
+  it("throws the backend message when sign-in is refused", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        json: async () => ({ message: "Invalid email or password" }),
+      }),
+    );
+
+    await expect(
+      loginUser({ email: "a@b.c", password: "wrong" }),
+    ).rejects.toThrow(/invalid email or password/i);
+  });
+});
+
+describe("logoutUser", () => {
+  it("posts to the /api-prefixed logout endpoint", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({ message: "ok" }) });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await logoutUser("a-token");
+
+    expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/api\/auth\/logout$/);
   });
 });
