@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import BookingConfirmation from "../components/booking/BookingConfirmation";
+import BookingForm from "../components/booking/BookingForm";
 import { getRooms } from "../services/api";
+import type { CreateReservationResponse } from "../types/reservation";
 import type { Room } from "../types/room";
 
 function RoomDetailsPage() {
@@ -8,6 +11,7 @@ function RoomDetailsPage() {
   const [room, setRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [booking, setBooking] = useState<CreateReservationResponse | null>(null);
 
   useEffect(() => {
     async function loadRoom() {
@@ -96,6 +100,18 @@ function RoomDetailsPage() {
               </ul>
             </div>
           </div>
+        </div>
+
+        <div className="mt-6">
+          {booking ? (
+            <BookingConfirmation
+              reservation={booking.reservation}
+              message={booking.message}
+              onBookAnother={() => setBooking(null)}
+            />
+          ) : (
+            <BookingForm room={room} onBooked={setBooking} />
+          )}
         </div>
       </div>
     </main>
