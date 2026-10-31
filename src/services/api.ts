@@ -59,6 +59,22 @@ export async function searchRoomAvailability(
     endTime: values.endTime,
   });
 
+  // Only include optional filters when they have values.
+  const location = values.location.trim();
+  const minCapacity = values.minCapacity.trim();
+
+  if (location) {
+    query.set("location", location);
+  }
+
+  if (minCapacity) {
+    query.set("minCapacity", minCapacity);
+  }
+
+  if (values.amenities.length > 0) {
+    query.set("amenities", values.amenities.join(","));
+  }
+
   const response = await fetch(
     `${API_BASE_URL}/api/rooms/availability?${query}`,
   );
