@@ -1,15 +1,13 @@
 import { useMemo, useState, type ReactNode } from "react"
 import { loginUser, logoutUser } from "../services/authService"
-import { AUTH_TOKEN_KEY } from "../services/authToken"
 import { authContext } from "./authContext"
+import { AUTH_TOKEN_KEY, AUTH_USER_KEY } from "../services/authToken"
 import type {
   AuthContextType,
   AuthResponse,
   LoginCredentials,
   User,
 } from "../types/auth"
-
-const AUTH_USER_KEY = "campussync_auth_user"
 
 interface AuthProviderProps {
   children: ReactNode
