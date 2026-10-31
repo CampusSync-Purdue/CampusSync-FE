@@ -8,8 +8,15 @@ export type DayOperatingHours = {
 
 export type OperatingHours = Partial<Record<string, DayOperatingHours>>;
 
-/** A room offered by the availability search. */
-export type AvailableRoom = Room & {
+/**
+ * A room offered by the availability search.
+ *
+ * `GET /api/rooms/availability` sends its hours as `availabilityHours`, while
+ * the booking endpoints send `openingHours`. Until the two payloads are
+ * reconciled, this type omits the booking shape rather than claiming a field
+ * the search response does not carry.
+ */
+export type AvailableRoom = Omit<Room, "openingHours"> & {
   description: string;
   availabilityHours: OperatingHours;
 };

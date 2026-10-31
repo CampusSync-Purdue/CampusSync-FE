@@ -19,3 +19,9 @@ export function authHeaders(): Record<string, string> {
 
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
+
+/**
+ * Alias kept so the booking service can import the name it was written
+ * against. Both names read the same key.
+ */
+export const getAuthToken = readAuthToken;
