@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import BookingForm from "./BookingForm";
 import { createReservation, getRoomAvailability } from "../../services/reservationService";
+import { getReservationRules } from "../../services/api";
 import {
   ReservationError,
   type BookedInterval,
@@ -17,6 +18,10 @@ vi.mock("../../services/reservationService", () => ({
   getRoomAvailability: vi.fn(),
 }));
 
+vi.mock("../../services/api", () => ({
+  getReservationRules: vi.fn(),
+}));
+
 const logoutMock = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("../../hooks/useAuth", () => ({
@@ -25,6 +30,7 @@ vi.mock("../../hooks/useAuth", () => ({
 
 const createReservationMock = vi.mocked(createReservation);
 const getRoomAvailabilityMock = vi.mocked(getRoomAvailability);
+const getReservationRulesMock = vi.mocked(getReservationRules);
 
 const room: Room = {
   id: "2f6b1c4e-8a3d-4f5b-9c71-0d2e3a4b5c01",
@@ -119,6 +125,8 @@ beforeEach(() => {
   createReservationMock.mockReset();
   getRoomAvailabilityMock.mockReset();
   getRoomAvailabilityMock.mockResolvedValue(availabilityWith([]));
+  getReservationRulesMock.mockReset();
+  getReservationRulesMock.mockResolvedValue({ maxDurationMinutes: 180 });
   logoutMock.mockClear();
 });
 
@@ -135,7 +143,7 @@ describe("BookingForm", () => {
     expect(createReservationMock).not.toHaveBeenCalled();
   });
 
-  it("limits end times to 4 hours after the chosen start", async () => {
+  it("limits end times to 3 hours after the chosen start", async () => {
     const user = userEvent.setup();
     renderForm();
 
@@ -145,7 +153,32 @@ describe("BookingForm", () => {
     const endValues = selectValues("End time");
 
     expect(endValues.at(0)).toBe("10:30");
-    expect(endValues.at(-1)).toBe("14:00");
+    expect(endValues.at(-1)).toBe("13:00");
+  });
+
+  it("uses the duration limit published by the backend", async () => {
+    const user = userEvent.setup();
+    getReservationRulesMock.mockResolvedValue({ maxDurationMinutes: 90 });
+    renderForm();
+
+    expect(await screen.findByText(/Bookings are 30 minutes to 90 minutes/)).toBeTruthy();
+
+    await chooseTomorrow();
+    await user.selectOptions(screen.getByLabelText("Start time"), "10:00");
+
+    expect(selectValues("End time").at(-1)).toBe("11:30");
+  });
+
+  it("falls back to 3 hours when the rules cannot be loaded", async () => {
+    const user = userEvent.setup();
+    getReservationRulesMock.mockRejectedValue(new Error("offline"));
+    renderForm();
+
+    await chooseTomorrow();
+    await user.selectOptions(screen.getByLabelText("Start time"), "10:00");
+
+    expect(screen.getByText(/Bookings are 30 minutes to 3 hours/)).toBeTruthy();
+    expect(selectValues("End time").at(-1)).toBe("13:00");
   });
 
   it("loads availability for the chosen date", async () => {

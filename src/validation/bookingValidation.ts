@@ -8,11 +8,17 @@ import {
   timeToMinutes,
   weekdayOf,
 } from "../utils/campusTime";
+import { describeMaxDuration } from "./availabilityValidation";
 
 // Mirrors the backend rules in CampusSync-BE/src/validation/reservationValidation.ts.
 export const BOOKING_INCREMENT_MINUTES = 30;
 export const BOOKING_MIN_MINUTES = 30;
-export const BOOKING_MAX_MINUTES = 4 * 60;
+/**
+ * Fallback only. The real limit comes from `GET /api/reservations/rules`
+ * (CampusSync-BE/src/config/reservationRules.ts); this default is used until
+ * that loads or if it fails. The server enforces the limit either way.
+ */
+export const BOOKING_MAX_MINUTES = 3 * 60;
 export const BOOKING_MAX_DAYS_AHEAD = 30;
 
 export type BookingFormValues = {
@@ -47,10 +53,10 @@ export function bookingDateRange(now: Date = new Date()) {
 
 /** Opening hours for the given date, in minutes, or null when closed. */
 export function hoursForDate(
-  openingHours: OpeningHours,
+  openingHours: OpeningHours | undefined,
   date: string,
 ): { open: number; close: number } | null {
-  if (!DATE_PATTERN.test(date)) {
+  if (!openingHours || !DATE_PATTERN.test(date)) {
     return null;
   }
 
@@ -178,7 +184,7 @@ export function startTimeOptions(
 }
 
 /**
- * End times ("HH:mm") allowed after `startTime`: 30 minutes to 4 hours,
+ * End times ("HH:mm") allowed after `startTime`: 30 minutes to `maxMinutes`,
  * before closing, and stopping at the next booked block.
  */
 export function endTimeOptions(
@@ -186,6 +192,7 @@ export function endTimeOptions(
   date: string,
   startTime: string,
   booked: BookedInterval[] = [],
+  maxMinutes: number = BOOKING_MAX_MINUTES,
 ): string[] {
   const hours = hoursForDate(openingHours, date);
   const start = timeToMinutes(startTime);
@@ -194,7 +201,7 @@ export function endTimeOptions(
     return [];
   }
 
-  const latest = Math.min(start + BOOKING_MAX_MINUTES, hours.close);
+  const latest = Math.min(start + maxMinutes, hours.close);
   const options: string[] = [];
 
   for (
@@ -218,6 +225,7 @@ export function pruneSelection(
   openingHours: OpeningHours,
   booked: BookedInterval[],
   now: Date = new Date(),
+  maxMinutes: number = BOOKING_MAX_MINUTES,
 ): BookingFormValues {
   const startTime = startTimeOptions(openingHours, values.date, now, booked).includes(
     values.startTime,
@@ -226,7 +234,9 @@ export function pruneSelection(
     : "";
   const endTime =
     startTime &&
-    endTimeOptions(openingHours, values.date, startTime, booked).includes(values.endTime)
+    endTimeOptions(openingHours, values.date, startTime, booked, maxMinutes).includes(
+      values.endTime,
+    )
       ? values.endTime
       : "";
 
@@ -241,6 +251,7 @@ export function validateBookingForm(
   openingHours: OpeningHours,
   now: Date = new Date(),
   booked: BookedInterval[] = [],
+  maxMinutes: number = BOOKING_MAX_MINUTES,
 ): ReservationFieldErrors {
   const errors: ReservationFieldErrors = {};
   const { min, max } = bookingDateRange(now);
@@ -271,12 +282,11 @@ export function validateBookingForm(
   } else if (
     !errors.date &&
     !errors.startTime &&
-    !endTimeOptions(openingHours, values.date, values.startTime, booked).includes(
+    !endTimeOptions(openingHours, values.date, values.startTime, booked, maxMinutes).includes(
       values.endTime,
     )
   ) {
-    errors.endTime =
-      "Choose an end time 30 minutes to 4 hours after the start, before closing and before the next booking.";
+    errors.endTime = `Choose an end time 30 minutes to ${describeMaxDuration(maxMinutes)} after the start, before closing and before the next booking.`;
   }
 
   return errors;

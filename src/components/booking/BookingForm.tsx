@@ -1,6 +1,8 @@
-import { useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { getReservationRules } from "../../services/api";
+import { describeMaxDuration } from "../../validation/availabilityValidation";
 import {
   createReservation,
   getRoomAvailability,
@@ -13,6 +15,7 @@ import {
   type ReservationFieldErrors,
 } from "../../types/reservation";
 import {
+  BOOKING_MAX_MINUTES,
   bookingDateRange,
   EMPTY_BOOKING_FORM,
   endTimeOptions,
@@ -71,6 +74,29 @@ function BookingForm({ room, onBooked }: BookingFormProps) {
   const inFlight = useRef(false);
   // Ignores availability responses for a date the user has since changed.
   const availabilityRequest = useRef(0);
+  // The backend publishes the duration limit. Until it loads, or if it fails,
+  // the form uses the default; the server enforces the real limit on submit.
+  const [maxMinutes, setMaxMinutes] = useState(BOOKING_MAX_MINUTES);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getReservationRules()
+      .then((rules) => {
+        if (
+          !cancelled &&
+          Number.isInteger(rules.maxDurationMinutes) &&
+          rules.maxDurationMinutes > 0
+        ) {
+          setMaxMinutes(rules.maxDurationMinutes);
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const { min, max } = bookingDateRange();
   // Booked ranges only apply to the date they were loaded for.
@@ -85,8 +111,8 @@ function BookingForm({ room, onBooked }: BookingFormProps) {
     [room.openingHours, values.date, booked],
   );
   const endOptions = useMemo(
-    () => endTimeOptions(room.openingHours, values.date, values.startTime, booked),
-    [room.openingHours, values.date, values.startTime, booked],
+    () => endTimeOptions(room.openingHours, values.date, values.startTime, booked, maxMinutes),
+    [room.openingHours, values.date, values.startTime, booked, maxMinutes],
   );
   const slots = useMemo(
     () => timelineSlots(room.openingHours, values.date, booked),
@@ -122,7 +148,7 @@ function BookingForm({ room, onBooked }: BookingFormProps) {
       if (prune) {
         setValues((current) =>
           current.date === date
-            ? pruneSelection(current, room.openingHours, result.booked)
+            ? pruneSelection(current, room.openingHours, result.booked, new Date(), maxMinutes)
             : current,
         );
       }
@@ -167,7 +193,7 @@ function BookingForm({ room, onBooked }: BookingFormProps) {
       // Keep the chosen times only if they are still offered on the new date.
       const starts = startTimeOptions(room.openingHours, date);
       const startTime = starts.includes(current.startTime) ? current.startTime : "";
-      const ends = endTimeOptions(room.openingHours, date, startTime);
+      const ends = endTimeOptions(room.openingHours, date, startTime, [], maxMinutes);
       const endTime = ends.includes(current.endTime) ? current.endTime : "";
 
       return { date, startTime, endTime };
@@ -178,7 +204,7 @@ function BookingForm({ room, onBooked }: BookingFormProps) {
 
   function updateStartTime(startTime: string) {
     setValues((current) => {
-      const ends = endTimeOptions(room.openingHours, current.date, startTime, booked);
+      const ends = endTimeOptions(room.openingHours, current.date, startTime, booked, maxMinutes);
       const endTime = ends.includes(current.endTime) ? current.endTime : "";
 
       return { ...current, startTime, endTime };
@@ -195,7 +221,13 @@ function BookingForm({ room, onBooked }: BookingFormProps) {
   function selectSlot(slot: TimelineSlot) {
     setValues((current) => {
       if (current.startTime && current.endTime && slot.start >= current.startTime) {
-        const ends = endTimeOptions(room.openingHours, current.date, current.startTime, booked);
+        const ends = endTimeOptions(
+          room.openingHours,
+          current.date,
+          current.startTime,
+          booked,
+          maxMinutes,
+        );
 
         if (ends.includes(slot.end)) {
           return { ...current, endTime: slot.end };
@@ -214,7 +246,7 @@ function BookingForm({ room, onBooked }: BookingFormProps) {
       return;
     }
 
-    const errors = validateBookingForm(values, room.openingHours, new Date(), booked);
+    const errors = validateBookingForm(values, room.openingHours, new Date(), booked, maxMinutes);
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -276,7 +308,7 @@ function BookingForm({ room, onBooked }: BookingFormProps) {
       </h2>
 
       <p className="mb-6 text-sm text-slate-600">
-        Bookings are 30 minutes to 4 hours, up to 30 days ahead. Times are campus
+        Bookings are 30 minutes to {describeMaxDuration(maxMinutes)}, up to 30 days ahead. Times are campus
         time ({zone}).
       </p>
 
