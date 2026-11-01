@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import TimeSelect from "../components/common/TimeSelect";
-import { getReservationRules, searchRoomAvailability } from "../services/api";
+import {
+  getReservationRules,
+  getRooms,
+  searchRoomAvailability,
+} from "../services/api";
 import {
   describeMaxDuration,
   durationMinutes,
@@ -49,6 +53,7 @@ function RoomAvailabilityPage() {
   const [maxDurationMinutes, setMaxDurationMinutes] = useState<number | null>(
     null,
   );
+  const [availableAmenities, setAvailableAmenities] = useState<string[]>([]);
 
   useEffect(() => {
     // The limit is shown as guidance. If it cannot be read the form still
@@ -56,6 +61,22 @@ function RoomAvailabilityPage() {
     getReservationRules()
       .then((rules) => setMaxDurationMinutes(rules.maxDurationMinutes))
       .catch(() => setMaxDurationMinutes(null));
+  }, []);
+
+  useEffect(() => {
+    getRooms()
+      .then((rooms) => {
+        const amenities = Array.from(
+          new Map(
+            rooms
+              .flatMap((room) => room.amenities)
+             .map((amenity) => [amenity.toLowerCase(), amenity] as const),
+          ).values(),
+        ).sort((a, b) => a.localeCompare(b));
+
+       setAvailableAmenities(amenities);
+    })
+      .catch(() => setAvailableAmenities([]));
   }, []);
 
   const selectedMinutes =
@@ -68,11 +89,42 @@ function RoomAvailabilityPage() {
     selectedMinutes !== null &&
     selectedMinutes > maxDurationMinutes;
 
-  function updateField(field: keyof AvailabilityFormValues, value: string) {
+  type TextField = Exclude<keyof AvailabilityFormValues, "amenities">;
+
+  function updateField(field: TextField, value: string) {
     setValues((current) => ({ ...current, [field]: value }));
-    // Clear the message for the field being corrected, so it does not linger
-    // while the user is still typing.
     setFieldErrors((current) => ({ ...current, [field]: undefined }));
+  }
+
+  function toggleAmenity(amenity: string) {
+    setValues((current) => ({
+      ...current,
+      amenities: current.amenities.includes(amenity)
+        ? current.amenities.filter((item) => item !== amenity)
+        : [...current.amenities, amenity],
+    }));
+
+    setFieldErrors((current) => ({ ...current, amenities: undefined }));
+  }
+
+  function clearFilters() {
+    setValues((current) => ({
+      ...current,
+      location: "",
+      minCapacity: "",
+      amenities: [],
+    }));
+
+    setFieldErrors((current) => ({
+      ...current,
+      location: undefined,
+      minCapacity: undefined,
+      amenities: undefined,
+    }));
+
+    // Prevent previously displayed search results from appearing to reflect
+    // the newly cleared filters.
+    setResult(null);
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -192,6 +244,98 @@ function RoomAvailabilityPage() {
             : ""}
         </p>
 
+        {/* CSYNC-16: Room filters */}
+        <div className="mt-6 border-t border-slate-200 pt-5">
+          <h2 className="mb-4 text-lg font-semibold text-slate-900">
+            Filter rooms by needs
+          </h2>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label
+                htmlFor="availability-location"
+                className="mb-1 block font-medium text-slate-800"
+              >
+                Location
+              </label>
+
+              <input
+                id="availability-location"
+                name="location"
+                type="text"
+                placeholder="e.g. Library"
+                value={values.location}
+                onChange={(event) =>
+                  updateField("location", event.target.value)
+                }
+                aria-invalid={Boolean(fieldErrors.location)}
+                className={FIELD_CLASSES}
+              />
+
+              <FieldError message={fieldErrors.location} />
+            </div>
+
+            <div>
+              <label
+                htmlFor="availability-min-capacity"
+                className="mb-1 block font-medium text-slate-800"
+              >
+                Minimum capacity
+              </label>
+
+              <input
+                id="availability-min-capacity"
+                name="minCapacity"
+                type="number"
+                min="1"
+                step="1"
+                placeholder="e.g. 8"
+                value={values.minCapacity}
+                onChange={(event) =>
+                  updateField("minCapacity", event.target.value)
+                }
+                aria-invalid={Boolean(fieldErrors.minCapacity)}
+                className={FIELD_CLASSES}
+              />
+
+                  <FieldError message={fieldErrors.minCapacity} />
+            </div>
+          </div>
+
+          <fieldset className="mt-5">
+            <legend className="mb-2 font-medium text-slate-800">
+              Amenities
+            </legend>
+
+            {availableAmenities.length > 0 ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {availableAmenities.map((amenity) => (
+                  <label
+                    key={amenity}
+                    className="flex items-center gap-2 text-slate-700"
+                  >
+                    <input
+                      type="checkbox"
+                      name="amenities"
+                      value={amenity}
+                      checked={values.amenities.includes(amenity)}
+                      onChange={() => toggleAmenity(amenity)}
+                      className="h-4 w-4 accent-slate-900"
+                    />
+                    {amenity}
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">
+                No amenity options are currently available.
+              </p>
+            )}
+
+            <FieldError message={fieldErrors.amenities} />
+          </fieldset>
+        </div>
+
         {exceedsLimit && maxDurationMinutes !== null ? (
           <p role="alert" className="mt-2 text-sm text-amber-700">
             The time you chose is longer than {describeMaxDuration(maxDurationMinutes)}.
@@ -205,6 +349,15 @@ function RoomAvailabilityPage() {
           className="mt-4 rounded bg-slate-900 px-5 py-2 font-medium text-white transition hover:bg-slate-700 disabled:opacity-60"
         >
           {searching ? "Searching..." : "Search"}
+        </button>
+
+        <button
+          type="button"
+          onClick={clearFilters}
+          disabled={searching}
+          className="ml-3 mt-4 rounded border border-slate-300 px-5 py-2 font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-60"
+        >
+          Clear filters
         </button>
 
         {formError ? (

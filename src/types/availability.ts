@@ -26,17 +26,31 @@ export type AvailabilityFormValues = {
   date: string;
   startTime: string;
   endTime: string;
+  location: string;
+  minCapacity: string;
+  amenities: string[];
 };
 
 export const EMPTY_AVAILABILITY_FORM: AvailabilityFormValues = {
   date: "",
   startTime: "",
   endTime: "",
+  location: "",
+  minCapacity: "",
+  amenities: [],
 };
 
 /** Field-level messages keyed by form field, matching the backend's shape. */
 export type AvailabilityFieldErrors = Partial<
-  Record<"date" | "startTime" | "endTime", string>
+  Record<
+    | "date"
+    | "startTime"
+    | "endTime"
+    | "location"
+    | "minCapacity"
+    | "amenities",
+    string
+  >
 >;
 
 export type AvailabilityResult = {

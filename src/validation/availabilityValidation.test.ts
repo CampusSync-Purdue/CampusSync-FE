@@ -10,6 +10,9 @@ const VALID: AvailabilityFormValues = {
   date: "2026-10-21",
   startTime: "14:00",
   endTime: "16:00",
+  location: "",
+  minCapacity: "",
+  amenities: [],
 };
 
 describe("validateAvailabilityForm", () => {
@@ -19,6 +22,7 @@ describe("validateAvailabilityForm", () => {
 
   it("requires every field", () => {
     const errors = validateAvailabilityForm({
+      ...VALID,
       date: "",
       startTime: "",
       endTime: "",
@@ -62,7 +66,8 @@ describe("validateAvailabilityForm", () => {
   it("ignores surrounding whitespace", () => {
     expect(
       validateAvailabilityForm({
-        date: " 2026-10-21 ",
+       ...VALID,
+       date: " 2026-10-21 ",
         startTime: " 14:00 ",
         endTime: " 16:00 ",
       }),

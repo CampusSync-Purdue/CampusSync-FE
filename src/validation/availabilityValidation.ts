@@ -22,6 +22,9 @@ export function validateAvailabilityForm(
   const date = values.date.trim();
   const startTime = values.startTime.trim();
   const endTime = values.endTime.trim();
+  const location = values.location.trim();
+  const minCapacity = values.minCapacity.trim();
+  const amenities = values.amenities;
 
   if (date.length === 0) {
     errors.date = "A date is required.";
@@ -44,6 +47,35 @@ export function validateAvailabilityForm(
   // Both are zero-padded 24-hour values, so text order is clock order.
   if (!errors.startTime && !errors.endTime && endTime <= startTime) {
     errors.endTime = "The end time must be after the start time.";
+  }
+
+  // Optional location filter
+  if (location.length > 100) {
+    errors.location = "Enter a valid location (up to 100 characters).";
+  }
+
+  // Optional minimum capacity filter
+  if (minCapacity !== "") {
+    const capacity = Number(minCapacity);
+
+    if (
+      !/^[1-9]\d*$/.test(minCapacity) ||
+      !Number.isSafeInteger(capacity)
+    ) {
+      errors.minCapacity = "Enter a positive whole number.";
+    }
+  }
+
+  // Optional amenities filter
+  if (
+    amenities.length > 20 ||
+    amenities.some(
+      (amenity) =>
+        amenity.trim().length === 0 ||
+        amenity.trim().length > 100,
+    )
+  ) {
+    errors.amenities = "Select up to 20 valid amenities.";
   }
 
   return errors;
