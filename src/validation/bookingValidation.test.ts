@@ -50,10 +50,14 @@ describe("startTimeOptions", () => {
 });
 
 describe("endTimeOptions", () => {
-  it("offers 30 minutes to 4 hours after the start", () => {
+  it("offers 30 minutes to 3 hours after the start", () => {
     expect(endTimeOptions(DAILY, TOMORROW, "10:00")).toEqual([
-      "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00",
+      "10:30", "11:00", "11:30", "12:00", "12:30", "13:00",
     ]);
+  });
+
+  it("uses a configured maximum when one is given", () => {
+    expect(endTimeOptions(DAILY, TOMORROW, "10:00", [], 60)).toEqual(["10:30", "11:00"]);
   });
 
   it("stops at closing time", () => {
@@ -141,13 +145,13 @@ describe("validateBookingForm", () => {
     ).toMatch(/30 days/);
   });
 
-  it("rejects times outside opening hours and over 4 hours", () => {
+  it("rejects times outside opening hours and over 3 hours", () => {
     expect(
       validateBookingForm({ date: TOMORROW, startTime: "07:30", endTime: "08:30" }, DAILY, NOW).startTime,
     ).toBe("Choose an available start time.");
     expect(
-      validateBookingForm({ date: TOMORROW, startTime: "10:00", endTime: "14:30" }, DAILY, NOW).endTime,
-    ).toMatch(/4 hours/);
+      validateBookingForm({ date: TOMORROW, startTime: "10:00", endTime: "13:30" }, DAILY, NOW).endTime,
+    ).toMatch(/3 hours/);
     expect(
       validateBookingForm({ date: TOMORROW, startTime: "19:30", endTime: "20:30" }, DAILY, NOW).endTime,
     ).toMatch(/before closing/);

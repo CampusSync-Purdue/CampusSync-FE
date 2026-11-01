@@ -38,7 +38,17 @@ export async function getRooms(): Promise<Room[]> {
     throw new Error("Failed to fetch rooms");
   }
 
-  return response.json();
+  // The backend sends a room's hours as `availabilityHours`; the booking UI
+  // reads `openingHours`. Without this mapping, picking a date crashes the page.
+  const rooms: Array<Omit<Room, "openingHours"> & {
+    openingHours?: Room["openingHours"];
+    availabilityHours?: Room["openingHours"];
+  }> = await response.json();
+
+  return rooms.map(({ availabilityHours, openingHours, ...room }) => ({
+    ...room,
+    openingHours: openingHours ?? availabilityHours ?? {},
+  }));
 }
 
 /**
