@@ -207,3 +207,40 @@ export async function cancelReservation(
 
   return body as CancelReservationSuccess;
 }
+
+/**
+ * Cancels the authenticated user's own upcoming active reservation.
+ *
+ * CSYNC-21 — Cancel my reservation (US-12).
+ *
+ * The backend verifies that:
+ * - The reservation belongs to the authenticated user.
+ * - The reservation is active.
+ * - The reservation has not started.
+ *
+ * The record is preserved with status 'cancelled', and its time slot
+ * becomes available for another reservation.
+ *
+ * @throws CancelReservationError with the backend's error message.
+ */
+export async function cancelMyReservation(
+  reservationId: string,
+): Promise<CancelReservationSuccess> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/reservations/me/${encodeURIComponent(reservationId)}/cancel`,
+    {
+      method: "POST",
+      headers: authHeaders(),
+    },
+  );
+
+  const body = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new CancelReservationError(
+      body?.message ?? "Unable to cancel your reservation. Please try again.",
+    );
+  }
+
+  return body as CancelReservationSuccess;
+}
