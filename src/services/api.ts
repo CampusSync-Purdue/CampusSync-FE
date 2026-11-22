@@ -1,6 +1,8 @@
 import type { Room } from "../types/room";
 import {
   CancelReservationError,
+  type AdminReservation,
+  type AdminReservationQuery,
   type CancelReservationSuccess,
   type GroupedReservations,
 } from "../types/reservation";
@@ -165,22 +167,44 @@ export async function createRoom(
 }
 
 /**
- * Reads every reservation, for administrators (US-15).
+ * Reads reservations for administrators (CSYNC-24 / US-15), filtered and
+ * sorted by the backend. Empty filters are left out of the query.
  *
- * Provisional: CSYNC-24 owns the administrator reservation view. This exists
- * so the cancellation action has something to act on.
+ * @throws Error carrying the backend's message when there is one.
  */
-export async function getAllReservations(): Promise<GroupedReservations> {
+export async function getAllReservations(
+  query: AdminReservationQuery,
+): Promise<AdminReservation[]> {
+  const params = new URLSearchParams({ sort: query.sort, order: query.order });
+
+  if (query.date) {
+    params.set("date", query.date);
+  }
+
+  if (query.roomId) {
+    params.set("roomId", query.roomId);
+  }
+
+  if (query.status) {
+    params.set("status", query.status);
+  }
+
   const response = await fetch(
-    `${API_BASE_URL}/api/reservations`,
+    `${API_BASE_URL}/api/reservations?${params}`,
     { headers: authHeaders() },
   );
 
+  const body = await response.json().catch(() => null);
+
   if (!response.ok) {
-    throw new Error("Failed to fetch reservations");
+    throw new Error(
+      typeof body?.message === "string" && body.message
+        ? body.message
+        : "Unable to load reservations. Please try again.",
+    );
   }
 
-  return response.json();
+  return (body as { reservations: AdminReservation[] }).reservations;
 }
 
 /**
