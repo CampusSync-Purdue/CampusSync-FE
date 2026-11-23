@@ -25,6 +25,31 @@ export type Reservation = {
   room: ReservationRoom;
 };
 
+/** The user who made a reservation, as shown to administrators. */
+export type ReservationUser = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+/** A reservation in the administrator list (US-15). */
+export type AdminReservation = Reservation & {
+  user: ReservationUser;
+};
+
+export type AdminReservationSortField = "date" | "room" | "status";
+export type SortOrder = "asc" | "desc";
+
+/** Query for GET /api/reservations. Empty strings mean "no filter". */
+export type AdminReservationQuery = {
+  /** Campus-local YYYY-MM-DD. */
+  date: string;
+  roomId: string;
+  status: ReservationStatus | "";
+  sort: AdminReservationSortField;
+  order: SortOrder;
+};
+
 /** The two sections the My Bookings page renders. */
 export type GroupedReservations = {
   upcoming: Reservation[];
