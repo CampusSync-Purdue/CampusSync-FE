@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import BookingConfirmation from "../components/booking/BookingConfirmation";
@@ -5,13 +6,16 @@ import BookingForm from "../components/booking/BookingForm";
 import { getRooms } from "../services/api";
 import type { CreateReservationResponse } from "../types/reservation";
 import type { Room } from "../types/room";
+import { toZonedDateTime } from "../utils/campusTime";
 
 function RoomDetailsPage() {
   const { roomId } = useParams();
+
   const [room, setRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [booking, setBooking] = useState<CreateReservationResponse | null>(null);
+  const [lastBookingDate, setLastBookingDate] = useState("");
 
   useEffect(() => {
     async function loadRoom() {
@@ -32,8 +36,21 @@ function RoomDetailsPage() {
       }
     }
 
-    loadRoom();
+    void loadRoom();
   }, [roomId]);
+
+  function handleBooked(result: CreateReservationResponse) {
+    const bookedDate = toZonedDateTime(
+      new Date(result.reservation.startTime),
+    ).date;
+
+    setLastBookingDate(bookedDate);
+    setBooking(result);
+  }
+
+  function handleBookAnother() {
+    setBooking(null);
+  }
 
   if (loading) {
     return (
@@ -54,7 +71,9 @@ function RoomDetailsPage() {
             ← Back to rooms
           </Link>
 
-          <h1 className="text-3xl font-bold text-slate-900">Room Not Found</h1>
+          <h1 className="text-3xl font-bold text-slate-900">
+            Room Not Found
+          </h1>
 
           <p className="mt-2 text-slate-600">
             {error || "This room is not available."}
@@ -81,17 +100,23 @@ function RoomDetailsPage() {
 
           <div className="space-y-4">
             <p className="text-slate-600">
-              <span className="font-semibold text-slate-900">Location:</span>{" "}
+              <span className="font-semibold text-slate-900">
+                Location:
+              </span>{" "}
               {room.location}
             </p>
 
             <p className="text-slate-600">
-              <span className="font-semibold text-slate-900">Capacity:</span>{" "}
+              <span className="font-semibold text-slate-900">
+                Capacity:
+              </span>{" "}
               {room.capacity}
             </p>
 
             <div>
-              <h2 className="mb-2 font-semibold text-slate-900">Amenities</h2>
+              <h2 className="mb-2 font-semibold text-slate-900">
+                Amenities
+              </h2>
 
               <ul className="list-inside list-disc text-slate-600">
                 {room.amenities.map((amenity) => (
@@ -107,10 +132,14 @@ function RoomDetailsPage() {
             <BookingConfirmation
               reservation={booking.reservation}
               message={booking.message}
-              onBookAnother={() => setBooking(null)}
+              onBookAnother={handleBookAnother}
             />
           ) : (
-            <BookingForm room={room} onBooked={setBooking} />
+            <BookingForm
+              room={room}
+              onBooked={handleBooked}
+              initialDate={lastBookingDate}
+            />
           )}
         </div>
       </div>

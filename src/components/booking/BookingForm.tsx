@@ -34,6 +34,7 @@ import AvailabilityTimeline from "./AvailabilityTimeline";
 interface BookingFormProps {
   room: Room;
   onBooked: (result: CreateReservationResponse) => void;
+  initialDate?: string;
 }
 
 type AvailabilityState = {
@@ -59,12 +60,16 @@ function inputClassName(hasError: boolean) {
   }`;
 }
 
-function BookingForm({ room, onBooked }: BookingFormProps) {
+function BookingForm({ room, onBooked, initialDate = "" }: BookingFormProps) {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [values, setValues] = useState<BookingFormValues>(EMPTY_BOOKING_FORM);
+  const [values, setValues] = useState<BookingFormValues>({
+    ...EMPTY_BOOKING_FORM,
+    date: initialDate,
+  });
+
   const [fieldErrors, setFieldErrors] = useState<ReservationFieldErrors>({});
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -77,6 +82,27 @@ function BookingForm({ room, onBooked }: BookingFormProps) {
   // The backend publishes the duration limit. Until it loads, or if it fails,
   // the form uses the default; the server enforces the real limit on submit.
   const [maxMinutes, setMaxMinutes] = useState(BOOKING_MAX_MINUTES);
+  // CSYNC-18: Reload availability when reopening after a successful booking.
+  useEffect(() => {
+    if (!initialDate) {
+      return;
+   }
+
+    const controller = new AbortController();
+
+    queueMicrotask(() => {
+      if (!controller.signal.aborted) {
+        void loadAvailability(initialDate);
+      }
+    });
+
+    return () => {
+      controller.abort();
+      availabilityRequest.current += 1;
+    };
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialDate]);
 
   useEffect(() => {
     let cancelled = false;
