@@ -46,6 +46,13 @@ function DashboardPage() {
               </Link>
 
               <Link
+                to="/admin/rooms"
+                className="rounded border border-slate-300 px-5 py-2 font-medium text-slate-900 transition hover:bg-slate-100"
+              >
+                Manage rooms
+              </Link>
+
+              <Link
                 to="/admin/reservations"
                 className="rounded border border-slate-300 px-5 py-2 font-medium text-slate-900 transition hover:bg-slate-100"
               >

@@ -1,5 +1,7 @@
 import {
+  EMPTY_ADD_ROOM_FORM,
   WEEKDAYS,
+  type AdminRoom,
   type AddRoomFieldErrors,
   type AddRoomFormValues,
   type NewRoomRequest,
@@ -97,5 +99,42 @@ export function toNewRoomRequest(values: AddRoomFormValues): NewRoomRequest {
     description: values.description.trim(),
     amenities: parseAmenities(values.amenities),
     availabilityHours,
+  };
+}
+
+/**
+ * CSYNC-23: Converts an existing room into editable form values.
+ *
+ * Preserves the room's current information, amenities,
+ * and operating hours when the edit page first loads.
+ */
+export function toEditRoomFormValues(
+  room: AdminRoom,
+): AddRoomFormValues {
+  const hours: AddRoomFormValues["hours"] = {
+    ...EMPTY_ADD_ROOM_FORM.hours,
+  };
+
+  for (const day of WEEKDAYS) {
+    const existingHours = room.availabilityHours[day];
+
+    hours[day] = existingHours
+      ? {
+          enabled: true,
+          open: existingHours.open,
+          close: existingHours.close,
+        }
+      : {
+          ...EMPTY_ADD_ROOM_FORM.hours[day],
+        };
+  }
+
+  return {
+    name: room.name,
+    location: room.location,
+    capacity: String(room.capacity),
+    description: room.description,
+    amenities: room.amenities.join(", "),
+    hours,
   };
 }

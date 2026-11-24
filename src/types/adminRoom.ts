@@ -84,3 +84,35 @@ export class CreateRoomError extends Error {
     this.fieldErrors = fieldErrors;
   }
 }
+
+/**
+ * CSYNC-23: Room information returned to administrators.
+ * Unlike the public catalog, this includes inactive rooms.
+ */
+export type AdminRoom = NewRoomRequest & {
+  id: string;
+  isActive: boolean;
+};
+
+/** Response from updating or deactivating a room. */
+export type RoomManagementSuccess = {
+  message: string;
+  room: AdminRoom;
+};
+
+/**
+ * Errors from administrator room-management requests.
+ * Includes field-level errors for invalid room updates.
+ */
+export class RoomManagementError extends Error {
+  readonly fieldErrors: AddRoomFieldErrors;
+
+  constructor(
+    message: string,
+    fieldErrors: AddRoomFieldErrors = {},
+  ) {
+    super(message);
+    this.name = "RoomManagementError";
+    this.fieldErrors = fieldErrors;
+  }
+}

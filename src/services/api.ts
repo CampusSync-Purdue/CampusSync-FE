@@ -9,8 +9,11 @@ import {
 import { authHeaders } from "./authToken";
 import {
   CreateRoomError,
+  RoomManagementError,
+  type AdminRoom,
   type CreateRoomSuccess,
   type NewRoomRequest,
+  type RoomManagementSuccess,
 } from "../types/adminRoom";
 import {
   AvailabilitySearchError,
@@ -230,4 +233,101 @@ export async function cancelReservation(
   }
 
   return body as CancelReservationSuccess;
+}
+
+
+/**
+ * CSYNC-23: Returns all rooms for administrator management,
+ * including inactive rooms.
+ */
+export async function getAdminRooms(): Promise<AdminRoom[]> {
+  const response = await fetch(`${API_BASE_URL}/api/rooms/admin`, {
+    headers: authHeaders(),
+  });
+
+  const body = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new RoomManagementError(
+      body?.message ?? "Unable to load rooms. Please try again.",
+    );
+  }
+
+  return body as AdminRoom[];
+}
+
+/**
+ * CSYNC-23: Retrieves one room for administrator editing.
+ */
+export async function getAdminRoomById(roomId: string): Promise<AdminRoom> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/rooms/admin/${encodeURIComponent(roomId)}`,
+    { headers: authHeaders() },
+  );
+
+  const body = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new RoomManagementError(
+      body?.message ?? "Unable to load the room. Please try again.",
+    );
+  }
+
+  return body as AdminRoom;
+}
+
+/**
+ * CSYNC-23: Updates a room without changing its active status.
+ */
+export async function updateRoom(
+  roomId: string,
+  room: NewRoomRequest,
+): Promise<RoomManagementSuccess> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/rooms/${encodeURIComponent(roomId)}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders(),
+      },
+      body: JSON.stringify(room),
+    },
+  );
+
+  const body = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new RoomManagementError(
+      body?.message ?? "Unable to update the room. Please try again.",
+      body?.errors ?? {},
+    );
+  }
+
+  return body as RoomManagementSuccess;
+}
+
+/**
+ * CSYNC-23: Deactivates a room without deleting reservation history.
+ */
+export async function deactivateRoom(
+  roomId: string,
+): Promise<RoomManagementSuccess> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/rooms/${encodeURIComponent(roomId)}/deactivate`,
+    {
+      method: "POST",
+      headers: authHeaders(),
+    },
+  );
+
+  const body = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new RoomManagementError(
+      body?.message ?? "Unable to deactivate the room. Please try again.",
+    );
+  }
+
+  return body as RoomManagementSuccess;
 }

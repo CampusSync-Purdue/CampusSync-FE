@@ -9,6 +9,8 @@ import MyBookingsPage from "../pages/MyBookingsPage";
 import RoomsPage from "../pages/RoomsPage";
 import RoomAvailabilityPage from "../pages/RoomAvailabilityPage";
 import RoomDetailsPage from "../pages/RoomDetailsPage";
+import ManageRoomsPage from "../pages/ManageRoomsPage";
+import EditRoomPage from "../pages/EditRoomPage";
 import { ProtectedRoute } from "./ProtectedRoute";
 
 function AppRoutes() {
@@ -28,10 +30,17 @@ function AppRoutes() {
         <Route path="/my-bookings" element={<MyBookingsPage />} />
       </Route>
 
+      
       <Route element={<ProtectedRoute requiredRole="admin" />}>
+        <Route path="/admin/rooms" element={<ManageRoomsPage />} />
         <Route path="/admin/rooms/new" element={<AddRoomPage />} />
+        <Route
+          path="/admin/rooms/:roomId/edit"
+          element={<EditRoomPage />}
+         />
         <Route path="/admin/reservations" element={<AdminReservationsPage />} />
       </Route>
+
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
