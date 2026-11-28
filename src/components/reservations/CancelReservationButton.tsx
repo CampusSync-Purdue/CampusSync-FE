@@ -7,24 +7,30 @@ import {
 
 type CancelReservationButtonProps = {
   reservation: Reservation;
-  /** Called with the cancelled reservation so the list can refresh its row. */
+
+  /** Called after a successful cancellation. */
   onCancelled: (reservation: Reservation) => void;
+
+  /**
+   * Cancellation API function.
+   * Defaults to the administrator endpoint for backward compatibility.
+   */
+  cancelAction?: typeof cancelReservation;
 };
 
 /**
- * The administrator cancellation action (US-16).
+ * Reusable reservation cancellation action.
  *
- * Cancelling cannot be undone, so the action asks for confirmation inline
- * rather than acting on the first click. The confirmation is rendered in the
- * page instead of a browser dialog, so it is reachable by keyboard and does
- * not block the page.
+ * Administrators use cancelReservation (US-16).
+ * Regular users can supply cancelMyReservation (US-12 / CSYNC-21).
  *
- * Only an upcoming active reservation can be cancelled; for anything else the
- * action is not offered, and the backend refuses it regardless.
+ * Cancellation requires confirmation before sending a request.
+ * The backend enforces ownership and reservation eligibility.
  */
 export function CancelReservationButton({
   reservation,
   onCancelled,
+  cancelAction = cancelReservation,
 }: CancelReservationButtonProps) {
   const [confirming, setConfirming] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -39,7 +45,7 @@ export function CancelReservationButton({
     setError("");
 
     try {
-      const result = await cancelReservation(reservation.id);
+      const result = await cancelAction(reservation.id);
 
       onCancelled(result.reservation);
     } catch (caught) {
@@ -48,6 +54,7 @@ export function CancelReservationButton({
           ? caught.message
           : "Unable to cancel the reservation. Please try again.",
       );
+
       setConfirming(false);
     } finally {
       setCancelling(false);
